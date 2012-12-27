@@ -7,16 +7,19 @@ import java.awt.{Stroke,BasicStroke}
 object FractalTree extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "Hello, World!"
-    contents = new HelperPanel
+    contents = new HelperPanel(6,.150)
   }
 }
 
-class HelperPanel extends Panel {
-
+class HelperPanel(val depth:Int,val thickCoeff:Double) extends Panel {
+  val width = 600
+  val height= 600
   val pi = 3.14159
+  val upperCoeff = .95
+  val baseBranchLength = 350.0
 
-  preferredSize = new Dimension(400,400)
-  minimumSize = new Dimension(200,200)
+  preferredSize = new Dimension(width,height)
+  //minimumSize = new Dimension(200,200)
 
   override def paintComponent(g: Graphics2D) = {
     g.setColor(new Color(100,100,255))
@@ -24,15 +27,14 @@ class HelperPanel extends Panel {
     g.setColor(new Color(100,255,0))
 
     val angle = pi/2
-    val branchLength = 350.0
-    paintBranch(g,200.0,20.0,angle,branchLength,6)
+    paintBranch(g,width/2.0,20.0,angle,baseBranchLength,depth)
   }
 
 
 
   def paintBranch(g: Graphics2D,startX:Double,startY:Double,angle:Double,branchLength:Double,depthLeft:Int):Unit = {
-    g.setColor(new Color(100,255,0))
-    g.setStroke(new BasicStroke(.75f*depthLeft))
+    g.setColor(new Color(100,255-20*depthLeft,0))
+    g.setStroke(new BasicStroke(thickCoeff.floatValue*depthLeft))
     val endX = startX + math.cos(angle)*branchLength;
     val endY = startY + math.sin(angle)*branchLength;
     g.draw(new Line2D.Double(startX,startY,endX,endY))
@@ -41,7 +43,7 @@ class HelperPanel extends Panel {
       paintBranch(g,midPoint._1,midPoint._2,angle+pi/12,branchLength/1.52,depthLeft-1)
       paintBranch(g,midPoint._1,midPoint._2,angle-pi/12,branchLength/1.52,depthLeft-1)
 
-      val upperPoint = (.92*startX+.08*endX,.92*startY+.08*endY)
+      val upperPoint = (upperCoeff*startX+(1.0-upperCoeff)*endX,upperCoeff*startY+(1.0-upperCoeff)*endY)
       paintBranch(g,upperPoint._1,upperPoint._2,angle+pi/12,branchLength/2.5,depthLeft-1)
       paintBranch(g,upperPoint._1,upperPoint._2,angle-pi/12,branchLength/2.5,depthLeft-1)
     }
