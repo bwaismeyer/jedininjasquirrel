@@ -16,6 +16,29 @@ object ReadNGrams {
     //val outputPath = if(args.size < 2) "output/trimmedCounts.txt" else args(1)
     //trim(inputPath,outputPath,10,10000)
     mungeStream(inputPath,new PrefixSliceMunger)
+    //sortSlice("output/slice-@.txt","output/sorted-@.txt",true,1)
+  }
+  
+  // Slices include a single count per line, and have a single prefix. Currently slice files must fit in memory
+  def sortSlice(slicePath:String,outPath:String,toLowerCase:Boolean,minCount:Int) = {
+    val cc = new clTools.WeightedCollection[String]
+    val source = Source.fromFile(slicePath)//("UTF-8")
+    val lines = source.getLines()
+    while(lines.hasNext) {
+      val line = lines.next
+      println(line)
+      val lSplit = line.split("\t")
+      val str = lSplit(0)
+      val count = lSplit(1).toInt
+      if(count > minCount) {
+    	  cc.add(if(toLowerCase) str.toLowerCase else str,count.doubleValue())
+      }
+    }
+    source.close()
+    val itemMap = cc.itemMap
+    val out = new PrintWriter(outPath)
+    cc.sortWeight().foreach((p) => {out.println(p._1 + "\t" + p._2)})
+    out.close
   }
   
   trait StreamMunger {
@@ -100,6 +123,7 @@ object ReadNGrams {
       sm.munge(lines.next)
     }
     sm.close
+    source.close
   } 
   
   def trim(inputPath:String,outputPath:String,minCount:Int=1,maxLines:Long=10000000):Unit = {
