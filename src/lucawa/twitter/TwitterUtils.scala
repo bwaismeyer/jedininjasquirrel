@@ -14,7 +14,6 @@ import twitter4j.conf._
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
-
 object TwitterUtils {
 
   var oAConsumerKey = ""
