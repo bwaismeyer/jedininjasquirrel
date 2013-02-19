@@ -21,7 +21,7 @@ object ReadNGrams {
   
   // Slices include a single count per line, and have a single prefix. Currently slice files must fit in memory
   def sortSlice(slicePath:String,outPath:String,sortByCount:Boolean,toLowerCase:Boolean=true,minCount:Int=1) = {
-    val cc = new clTools.WeightedCollection[String]
+    val cc = new clTools.WeightedCollection[String](false,false)
     val source = Source.fromFile(slicePath)//("UTF-8")
     val lines = source.getLines()
     while(lines.hasNext) {
