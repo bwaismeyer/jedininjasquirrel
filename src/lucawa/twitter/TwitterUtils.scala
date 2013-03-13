@@ -274,6 +274,7 @@ object TwitterUtils {
   
   
   def listenToStream(keywords:IndexedSeq[String]):Unit = {
+    WordCounter.init
     val listener = new PrintStatusListener
     val config = buildConfiguration
     val twitterStream:TwitterStream = (new TwitterStreamFactory(config)).getInstance();
