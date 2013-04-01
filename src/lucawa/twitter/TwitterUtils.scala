@@ -50,6 +50,7 @@ object TwitterUtils {
     this.oAToken = args(2)
     this.oATokenSecret = args(3)
     listenToStream(Vector("sick","flu","sneezing"))
+    //listenToStream(Vector("capoeira","berimbau","pandeiru"))
   }
   
   def log(s: => String,lev:Int=10) {
