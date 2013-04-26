@@ -7,6 +7,14 @@ object TextWtdIo {
   
   def main(args:Array[String]):Unit = {
     val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
+    val w = twi.readWtftd
+    println("All tasks: " + w.printAllTasks)
+    println("Tasks in order: ")
+    println(w.printTasksInOrder)
+  }
+  
+  def test = {
+    val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
     val two = new TextWtdIo("data/newTmpTodo.txt")
     val w = twi.readWtftd
     println("Tasks in order: ")
@@ -49,7 +57,7 @@ class TextWtdIo(val path:String) extends WtdIo {
         newTask.done = true
       }
       parentStack.push((newTask,depth))
-      println(indent.length + " priority " + priority + "\tcontext: " + context + "\tstring: " + taskString)
+      //println(indent.length + " complete: " + isComplete + " priority " + priority + "\tcontext: " + context + "\tstring: " + taskString)
     }
     w
   }

@@ -132,6 +132,7 @@ class Task(val description:String,private var priority:Double,private var parent
         newMe.addChild(newChild)
         newChild.setParent(newMe)
       }
+      newMe.done = this.done
       newMe
     }
 	
