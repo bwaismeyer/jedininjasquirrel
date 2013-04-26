@@ -17,6 +17,8 @@ object RtmWtdIo  {
 
 			val w = rwi.readWtftd;
 			println(w.printAllTasks)
+			val textWrite = new TextWtdIo("data/rtmTodoList.txt")
+			textWrite.syncWtftd(w)
 			val nt = w.getNextTask().asInstanceOf[RtmTask];
 			//val noteResult = rwi.addNote("bloo","bla\nblah\nbla",nt)
 			//addNote(nt.rtmNoteId,"testWsidNote","<hello>blar</hello>",timeline,nt.rtmListId,nt.rtmSeriesId,nt.rtmTaskId)
@@ -175,7 +177,8 @@ class RtmWtdIo(ak:String,val secret:String,t:Option[String],useAllTasks:Boolean=
 	}
 
 	def genRandomId = {
-	    System.currentTimeMillis() + "_" + "%8.0f".format(math.random*1E8)
+		// Time-based collisions should be extremely rare, and the random element should make those a non-issue
+	    System.currentTimeMillis() + "_" + System.nanoTime() + "_" + "%8.0f".format(math.random*1E8)
 	}
 
 	def notesToWsidFeatures(notes:scala.xml.NodeSeq):Option[(Double,Option[String],String,String,Set[String])] = {

@@ -2,17 +2,18 @@ package lucawa.wtftd
 //import scala.collection.mutable.PriorityQueue
 
 object Wtftd {
-
-	
-
-
 	def main(args:Array[String]):Unit = {
-	  
+	  test0
+	}
+	
+	def test0 = {
 	  val w = new Wtftd
 	  w.createChild(w.root,"A",10.0)
 	  w.createChild(w.root,"B",2.0)
 	  w.createChild(w.root.firstChild,"A1",1.0)
 	  
+	  val w2 = w.copy
+	  w.createChild(w.root.firstChild,"A2",.50)
 	  println("next task: " + w.getNextTask())
 	  //root.children.
 	  w.root.firstChild.updatePriority(100.0)
@@ -22,7 +23,8 @@ object Wtftd {
 	  // Setting a sub-tree to be complete, while skipping its elements
 	  w.root.firstIncompleteChild.get.done = true
 	  println("next task: " + w.getNextTask())
-	  println(w.printAllTasks)
+	  println("W:"+w.printAllTasks)
+	  println("W2:"+w2.printAllTasks)
 	  var isDone = false;
 	  while(!isDone) {
 	    val t = w.getNextTask()
@@ -37,8 +39,7 @@ object Wtftd {
 	
 }
 
-class Wtftd {
-	val root = new Task("root",0.0,None)
+class Wtftd(val root:Task=new Task("root",0.0,None)) {
 	/**
 	 * Given a set of tasks, add those without parents to the root.
 	 */
@@ -49,6 +50,22 @@ class Wtftd {
 	    	t.setParent(root)
 	    }
 	  })
+	}
+	
+	def copy:Wtftd = {
+	  new Wtftd(root.copy)
+	}
+	
+	def printTasksInOrder = {
+	  val sb = new StringBuffer
+	  val cw = this.copy
+	  var next = cw.getNextTask()
+	  while(next != cw.root) {
+	    sb.append(next.ancestryString + next.toString +"\n")
+	    next.done = true
+	    next = cw.getNextTask()
+	  }
+	  sb.toString
 	}
 	
 	def printAllTasks = {
@@ -72,15 +89,14 @@ class Wtftd {
 	  }
 	}
 
-	def getNextTask(parent:Task=root):Task = {
+	def getNextTask(parent:Task=root,condition:Function1[Task,Boolean]=(t:Task) => !t.done):Task = {
 		if(parent.isLeaf) {
 			parent
 		} else {
-		    val oc = parent.firstIncompleteChild
+		    val oc = parent.firstSatisfyingChild(condition)
 			if(oc.isEmpty) 
-			  parent else getNextTask(oc.get)
+			  parent else getNextTask(oc.get,condition)
 		}
-		
 	}
 }
 
@@ -101,6 +117,23 @@ class Task(val description:String,private var priority:Double,private var parent
 	  }
 	  return None
 	}
+	
+    def firstSatisfyingChild(condition:Function1[Task,Boolean]):Option[Task] = {
+	  for(c <- children) {
+	    if(condition(c)) return Some(c)
+	  }
+	  return None
+	}
+    
+    def copy:Task = {
+      val newMe = new Task(description,priority,None,context)
+      for(c <- children) {
+        val newChild = c.copy
+        newMe.addChild(newChild)
+        newChild.setParent(newMe)
+      }
+      newMe
+    }
 	
 	def getPriority = priority
 	
@@ -133,6 +166,13 @@ class Task(val description:String,private var priority:Double,private var parent
 	
 	override def toString:String = {
 	  return (if(done) "+" else "-") + " " + description + " " + priority
+	}
+	
+    def ancestryString:String = {
+      // the second check excludes the root
+	  if(this.hasParent && this.parent.get.hasParent) {
+	    this.parent.get.ancestryString + this.parent.get.description + " / "
+	  } else ""
 	}
 	
 	def printTree(depth:Int=0,depthStr:String="\t",stringFunc:Function1[Task,String]=(t:Task)=>t.toString):String = {

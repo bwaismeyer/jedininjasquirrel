@@ -6,9 +6,11 @@ import scala.collection.mutable.Stack
 object TextWtdIo {
   
   def main(args:Array[String]):Unit = {
-    val twi = new TextWtdIo("data/tmpTodo.txt")
+    val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
     val two = new TextWtdIo("data/newTmpTodo.txt")
     val w = twi.readWtftd
+    println("Tasks in order: ")
+    println(w.printTasksInOrder)
     w.createChild(w.root,"pretend task",1.0)
     println(w.printAllTasks)
     two.syncWtftd(w)
@@ -21,7 +23,7 @@ object TextWtdIo {
 class TextWtdIo(val path:String) extends WtdIo {
   
   def readWtftd:Wtftd = {
-    val linePattern = new scala.util.matching.Regex("""(\s*)([\+\-])\s+(\d+\.?\d*)(|[^\s]*)\s+(\S.*)""", "indent","complete","priority","context","taskString")
+    val linePattern = new scala.util.matching.Regex("""(\s*)([\+\-])\s+(\-?\d+\.?\d*)(|[^\s]*)\s+(\S.*)""", "indent","complete","priority","context","taskString")
     val w = new Wtftd
     val source = Source.fromFile(new File(path))(Codec.UTF8)
     val lines = source.getLines
@@ -55,7 +57,8 @@ class TextWtdIo(val path:String) extends WtdIo {
   // Better not to depend on t
    def taskToLine(t:Task):String = {
       val contextStr = if(t.getContext.isDefined) {"|" + t.getContext.get} else ""
-	  return (if(t.done) "+" else "-") + " " + t.getPriority + contextStr + " " + t.description
+      val priorityStr = if(t.getPriority == t.getPriority.toInt) t.getPriority.toInt.toString else t.getPriority.toString
+	  return (if(t.done) "+" else "-") + " " + priorityStr + contextStr + " " + t.description
 	}
    
    	//def tasksToStrings(w:Wtftd) = {
