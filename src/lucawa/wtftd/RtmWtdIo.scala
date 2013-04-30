@@ -150,11 +150,11 @@ class RtmWtdIo(ak:String,val secret:String,t:Option[String],useAllTasks:Boolean=
 				val currentTasks = (currentSeries \ "task");
 				val currentTask = currentTasks(currentTasks.size-1);
 				val rtmTaskId = currentTask.attribute("id").get.text;
-				val (wsidPriority:Double,wsidContext:Option[String],wsidId:String,noteId:String,childSet:Set[String]) = notesToWsidFeatures(notes).getOrElse{
+				val (wsidPriority:Double,wsidContexts:Set[String],wsidId:String,noteId:String,childSet:Set[String]) = notesToWsidFeatures(notes).getOrElse{
 				  if(useAllTasks) (0.0,None,genRandomId,"",Set.empty[String])
 				}
 
-				val curTask = new RtmTask(rtmName,wsidPriority,wsidContext,rtmListId,rtmSeriesId,rtmTaskId,noteId)
+				val curTask = new RtmTask(rtmName,wsidPriority,wsidContexts,rtmListId,rtmSeriesId,rtmTaskId,noteId)
 				taskMap = taskMap + (wsidId -> curTask)
 				childMap = childMap + (curTask -> childSet);
 				idMap = idMap + (wsidId -> rtmSeriesId);
@@ -181,7 +181,7 @@ class RtmWtdIo(ak:String,val secret:String,t:Option[String],useAllTasks:Boolean=
 	    System.currentTimeMillis() + "_" + System.nanoTime() + "_" + "%8.0f".format(math.random*1E8)
 	}
 
-	def notesToWsidFeatures(notes:scala.xml.NodeSeq):Option[(Double,Option[String],String,String,Set[String])] = {
+	def notesToWsidFeatures(notes:scala.xml.NodeSeq):Option[(Double,Set[String],String,String,Set[String])] = {
 		for(n <- 0 until notes.size) {
 			val thisNote = notes(n)
 					val noteTitle = thisNote.attribute("title").get.text;
@@ -203,7 +203,7 @@ class RtmWtdIo(ak:String,val secret:String,t:Option[String],useAllTasks:Boolean=
 				}
 				val wsidPriority = nXml.attribute("priority").get.text.toDouble;
 				val contextAtt = nXml.attribute("context");
-				val wsidContext:Option[String]  = if(contextAtt.isDefined) Some(contextAtt.get.text) else None;
+				val wsidContext:Set[String]  = if(contextAtt.isDefined) contextAtt.get.text.split(",").toSet else Set.empty;
 				return Some((wsidPriority,wsidContext,wsidId,noteId,childSet))
 			}
 		}

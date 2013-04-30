@@ -56,12 +56,27 @@ class Wtftd(val root:Task=new Task("root",0.0,None)) {
 	  new Wtftd(root.copy)
 	}
 	
-	def printTasksInOrder = {
+	/**
+	 * If contexts argument is empty, returns all incomplete tasks.
+	 * Otherwise returns all tasks with a context in the set.
+	 * To specify undefined contexts, use an empty string in the set.
+	 */
+	def printTasksInOrder(contexts:Set[String]=Set.empty) = {
+	  //println("ptio contexts:" + contexts)
 	  val sb = new StringBuffer
 	  val cw = this.copy
-	  var next = cw.getNextTask()
+	  var next = cw.getNextTask() //root,(t:Task) => !t.done)
 	  while(next != cw.root) {
-	    sb.append(next.ancestryString + next.toString +"\n")
+	    val currentContext = next.getContext(true)
+	    //println("currCon:" + currentContext)
+	    val overlap = currentContext.intersect(contexts)
+	    //println("overlap:" + overlap)
+	    if(contexts.isEmpty || 
+	        overlap.size > 0 ||
+	        (currentContext.isEmpty && contexts.contains(""))) { 
+	    	//println("added")
+	    	sb.append(next.ancestryString + next.toString +"\n")
+	    }
 	    next.done = true
 	    next = cw.getNextTask()
 	  }
@@ -74,7 +89,7 @@ class Wtftd(val root:Task=new Task("root",0.0,None)) {
 	  sb.toString
 	}
 	
-	def createChild(parent:Task,desc:String,priority:Double,context:Option[String]=None):Task = {
+	def createChild(parent:Task,desc:String,priority:Double,context:Set[String]=Set.empty):Task = {
 	  val child = new Task(desc,priority,Some(parent),context)
 	  parent.addChild(child)
 	  child
@@ -100,7 +115,7 @@ class Wtftd(val root:Task=new Task("root",0.0,None)) {
 	}
 }
 
-class Task(val description:String,private var priority:Double,private var parent:Option[Task],private var context:Option[String]=None) {
+class Task(val description:String,private var priority:Double,private var parent:Option[Task],private var context:Set[String]=Set.empty) {
   
   	implicit object Ord extends Ordering[Task] {
 		def compare(x: Task, y: Task) = y.priority.compare(x.priority)
@@ -138,7 +153,12 @@ class Task(val description:String,private var priority:Double,private var parent
 	
 	def getPriority = priority
 	
-	def getContext = context
+	def getContext(inherit:Boolean=true):Set[String] = {
+	  context ++ {if(inherit && parent.isDefined) parent.get.context else Set.empty}
+	  //if(context.isDefined) context else {
+	  //  if(parent.isDefined) parent.get.getContext else None
+	  //}
+	}
 	
 	def hasParent = !parent.isEmpty
 	

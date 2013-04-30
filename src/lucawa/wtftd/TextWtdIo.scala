@@ -8,9 +8,16 @@ object TextWtdIo {
   def main(args:Array[String]):Unit = {
     val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
     val w = twi.readWtftd
-    println("All tasks: " + w.printAllTasks)
-    println("Tasks in order: ")
-    println(w.printTasksInOrder)
+    val two = new TextWtdIo("C:/Users/chris/Documents/professional/todoListSorted.txt")
+    
+    two.syncWtftd(w)
+    //println("All tasks: " + w.printAllTasks)
+    //println("Tasks in order: ")
+    //println(w.printTasksInOrder)
+    writeString("C:/Users/chris/Documents/professional/todoItemsInOrder.txt",w.printTasksInOrder())
+    writeString("C:/Users/chris/Documents/professional/todoItemsInOrderReading.txt",w.printTasksInOrder(Set("reading","")))
+
+    
   }
   
   def test = {
@@ -18,14 +25,19 @@ object TextWtdIo {
     val two = new TextWtdIo("data/newTmpTodo.txt")
     val w = twi.readWtftd
     println("Tasks in order: ")
-    println(w.printTasksInOrder)
+    println(w.printTasksInOrder())
     w.createChild(w.root,"pretend task",1.0)
     println(w.printAllTasks)
     two.syncWtftd(w)
     val w2 = two.readWtftd
-    
   }
-  
+  def writeString(fPath:String,s:String) = {
+     val f = new File(fPath)
+      val out =  new PrintWriter(f,"UTF-8")
+      try {out.print(s);true} 
+	  catch {case e:Throwable => {e.printStackTrace;false}}
+      finally{out.close}
+   }
 }
 
 class TextWtdIo(val path:String) extends WtdIo {
@@ -45,7 +57,7 @@ class TextWtdIo(val path:String) extends WtdIo {
         case "-" => false
         case _   => throw new RuntimeException("unknown completeness state")
       }
-      val context:Option[String] = if(contextStr.length > 1) Some(contextStr.substring(1)) else None
+      val context:Set[String] = if(contextStr.length > 1) contextStr.substring(1).split(",").toSet else Set.empty
       val priority = priorityStr.toDouble
       val depth = indent.size
       while(depth <= parentStack.head._2) {
@@ -64,7 +76,7 @@ class TextWtdIo(val path:String) extends WtdIo {
   
   // Better not to depend on t
    def taskToLine(t:Task):String = {
-      val contextStr = if(t.getContext.isDefined) {"|" + t.getContext.get} else ""
+      val contextStr = if(t.getContext(false).isEmpty) "" else {"|" + t.getContext(false).mkString(",")}
       val priorityStr = if(t.getPriority == t.getPriority.toInt) t.getPriority.toInt.toString else t.getPriority.toString
 	  return (if(t.done) "+" else "-") + " " + priorityStr + contextStr + " " + t.description
 	}
@@ -78,12 +90,15 @@ class TextWtdIo(val path:String) extends WtdIo {
    def syncWtftd(w:Wtftd):Boolean = {
 	  val sb = new StringBuffer()
 	  w.root.children.foreach(c => {sb.append(c.printTree(0,"\t",taskToLine))}) 
-	  //w.root.children.foreach(c => {sb.append(c.printTree(0))})
-	  val f = new File(path)
-      val out =  new PrintWriter(f,"UTF-8")
-      try {out.print(sb.toString);true} 
-	  catch {case e:Throwable => {e.printStackTrace;false}}
-      finally{out.close}
+	  w.root.children.foreach(c => {sb.append(c.printTree(0))})
+	  TextWtdIo.writeString(path,sb.toString)
+	  //val f = new File(path)
+      //val out =  new PrintWriter(f,"UTF-8")
+      //try {out.print(sb.toString);true} 
+	  //catch {case e:Throwable => {e.printStackTrace;false}}
+      //finally{out.close}
    }
+   
+
   
 }
