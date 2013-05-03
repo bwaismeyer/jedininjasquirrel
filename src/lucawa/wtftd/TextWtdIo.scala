@@ -90,7 +90,7 @@ class TextWtdIo(val path:String) extends WtdIo {
    def syncWtftd(w:Wtftd):Boolean = {
 	  val sb = new StringBuffer()
 	  w.root.children.foreach(c => {sb.append(c.printTree(0,"\t",taskToLine))}) 
-	  w.root.children.foreach(c => {sb.append(c.printTree(0))})
+	  //w.root.children.foreach(c => {sb.append(c.printTree(0))})
 	  TextWtdIo.writeString(path,sb.toString)
 	  //val f = new File(path)
       //val out =  new PrintWriter(f,"UTF-8")
