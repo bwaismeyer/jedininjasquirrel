@@ -80,23 +80,12 @@ class TextWtdIo(val path:String) extends WtdIo {
       val priorityStr = if(t.getPriority == t.getPriority.toInt) t.getPriority.toInt.toString else t.getPriority.toString
 	  return (if(t.done) "+" else "-") + " " + priorityStr + contextStr + " " + t.description
 	}
-   
-   	//def tasksToStrings(w:Wtftd) = {
-	//  val sb = new StringBuffer()
-	//  w.root.children.foreach(c => {sb.append(c.printTree(0,"\t",taskToLine))})
-	//  sb.toString
-	//}
-  
+
+
    def syncWtftd(w:Wtftd):Boolean = {
 	  val sb = new StringBuffer()
 	  w.root.children.foreach(c => {sb.append(c.printTree(0,"\t",taskToLine))}) 
-	  //w.root.children.foreach(c => {sb.append(c.printTree(0))})
 	  TextWtdIo.writeString(path,sb.toString)
-	  //val f = new File(path)
-      //val out =  new PrintWriter(f,"UTF-8")
-      //try {out.print(sb.toString);true} 
-	  //catch {case e:Throwable => {e.printStackTrace;false}}
-      //finally{out.close}
    }
    
 

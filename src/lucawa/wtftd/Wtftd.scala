@@ -150,14 +150,37 @@ class Task(val description:String,private var priority:Double,private var parent
       newMe.done = this.done
       newMe
     }
+    
+    // Returns a derived tree that excludes all children that do not satisfy the target contexts.
+    // If contexts is empty, treat all contexts as valid.
+    def filteredCopy(contexts:Set[String]):Task = {
+      val newMe = new Task(description,priority,None,context)
+      for(c <- children) {
+        if(contexts.size == 0 || // need to look at both parents' and children's contexts
+           (c.getChildContexts(true) ++ c.getContext(true)).intersect(contexts).size > 0) {
+            val newChild = c.filteredCopy(contexts)
+            newMe.addChild(newChild)
+            newChild.setParent(newMe)
+        } else {
+          //println("excluded " + c)
+        }
+      }
+      newMe.done = this.done
+      newMe
+    }
 	
 	def getPriority = priority
 	
 	def getContext(inherit:Boolean=true):Set[String] = {
 	  context ++ {if(inherit && parent.isDefined) parent.get.context else Set.empty}
-	  //if(context.isDefined) context else {
-	  //  if(parent.isDefined) parent.get.getContext else None
-	  //}
+	}
+	
+	// All contexts for all children, optionally excluding completed subtrees.
+	def getChildContexts(includeCompletedTasks:Boolean=false):Set[String] = {
+	  def childContexts = for(c <- children;if(!c.done || includeCompletedTasks)) yield {
+	    c.getChildContexts(includeCompletedTasks)
+	  }
+	  context ++ childContexts.flatten
 	}
 	
 	def hasParent = !parent.isEmpty
