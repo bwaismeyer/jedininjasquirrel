@@ -3,11 +3,11 @@ package lucawa.wtftd
 import javax.swing.{JTextArea, JFrame, JPanel, JLabel, JButton,JTree}
 import javax.swing.tree.TreePath
 import scala.swing._
+import scala.swing.GridBagPanel._
 import scala.swing.event._
 import java.awt.event.MouseListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-
 
 object WtdUi extends SimpleSwingApplication {
 
@@ -48,11 +48,15 @@ object WtdUi extends SimpleSwingApplication {
 	  override lazy val peer = new JTree(treeModel)
     }
   } 
-  
-  val readingButton = new Button("reading");
-  val workButton = new Button("work");
-
+  val allTasksString = "All tasks"
+  val allButton = new Button(allTasksString)
   val allContexts = w.root.getChildContexts(true)
+  val flatTasks = new TextArea(10,20) {
+	lineWrap = true  
+    wordWrap = true
+  }
+  val flatTaskPane = new ScrollPane {contents = flatTasks}
+  flatTaskPane.preferredSize = new Dimension(400,100)
   val buttonPanel = new GridPanel(allContexts.size,1) {
     //contents ++= readingButton :: workButton :: Nil
     val contextButtons = allContexts.toIndexedSeq.sorted.map(ts => new Button(ts))
@@ -60,7 +64,10 @@ object WtdUi extends SimpleSwingApplication {
       println("listening to: " + b)
       WtdUi.listenTo(b)
       })
+    contents += allButton
+    WtdUi.listenTo(allButton)
     contents ++= contextButtons
+    this.preferredSize = new Dimension(150,200)
   }
   
   //listenTo(readingButton)
@@ -69,8 +76,14 @@ object WtdUi extends SimpleSwingApplication {
   reactions += {
     case ButtonClicked(b) => {
       println("clicked " + b.text)
-      if(allContexts.contains(b.text)) {
+      //if(b.text == allTasksString) {
+      if(b == allButton) {
+        val filteredW = new Wtftd(w.root)
+        flatTasks.text = filteredW.getNextTask().toString
+        filteredTreePane.contents = new Component {override lazy val peer = new JTree(new TreeModelWrapper(filteredW))}
+      } else if(allContexts.contains(b.text)) {
         val filteredW = new Wtftd(w.root.filteredCopy(Set(b.text)))
+        flatTasks.text = filteredW.getNextTask().toString
         filteredTreePane.contents = new Component {override lazy val peer = new JTree(new TreeModelWrapper(filteredW))}
       }
     }
@@ -96,8 +109,29 @@ object WtdUi extends SimpleSwingApplication {
   //val treeModel = new TreeModelWrapper(filteredW)
 
   def top = new MainFrame {
-    contents = new GridPanel(1,3) {
-      contents ++= treePane :: buttonPanel :: filteredTreePane :: Nil 
+    
+      
+    
+    contents = new GridBagPanel {
+      def constraints(x: Int, y: Int, 
+		    gridwidth: Int = 1, gridheight: Int = 1,
+		    weightx: Double = 0.0, weighty: Double = 0.0,
+		    fill: GridBagPanel.Fill.Value = GridBagPanel.Fill.None): Constraints = {
+      val c = new Constraints
+      c.gridx = x
+      c.gridy = y
+      c.gridwidth = gridwidth
+      c.gridheight = gridheight
+      c.weightx = weightx
+      c.weighty = weighty
+      c.fill = fill
+      c
+    }
+      //contents ++= treePane :: buttonPanel :: filteredTreePane :: Nil 
+      add(treePane,constraints(0,0,2,1))
+      add(buttonPanel,constraints(2,0))
+      add(filteredTreePane,constraints(3,0,2,1))
+      add(flatTaskPane,constraints(5,0,2,1))
     }
   }
   

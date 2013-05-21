@@ -162,7 +162,7 @@ class Task(val description:String,private var priority:Double,private var parent
             newMe.addChild(newChild)
             newChild.setParent(newMe)
         } else {
-          //println("excluded " + c)
+          println("excluded " + c)
         }
       }
       newMe.done = this.done
@@ -172,7 +172,7 @@ class Task(val description:String,private var priority:Double,private var parent
 	def getPriority = priority
 	
 	def getContext(inherit:Boolean=true):Set[String] = {
-	  context ++ {if(inherit && parent.isDefined) parent.get.context else Set.empty}
+	  context ++ {if(inherit && parent.isDefined) parent.get.getContext(inherit) else Set.empty}
 	}
 	
 	// All contexts for all children, optionally excluding completed subtrees.
