@@ -11,10 +11,7 @@ import java.awt.event.MouseEvent
 
 /**
  * UI for interacting with todo lists.
- * Major todo right now is to support changing tasks from the UI, rather than merely displaying them.
- * At the moment, many operations rely on filteredCopy, which creates a defensive copy of everything, and changes to the copy don't persist.
- * 
- * One alternative approach would be to use filters in TreeModelWrapper, which always keeps the same tree around.
+ * There are some missing triggers/events in the UI, and no provision for saving changes.
  */
 object WtdUi extends SimpleSwingApplication {
 
@@ -70,11 +67,14 @@ object WtdUi extends SimpleSwingApplication {
  
   val filteredTreePane = new ScrollPane {
     this.preferredSize = new Dimension(500,400)
-    contents = updatedTreeComp(w)
+    contents = updatedTreeComp(w,false,Set.empty)
   } 
   
-  def updatedTreeComp(wt:Wtftd) = {
-    val nt = new JTree(new TreeModelWrapper(wt))
+  def updatedTreeComp(wt:Wtftd,excludeComplete:Boolean,filtContexts:Set[String]) = {
+    val tmw = new TreeModelWrapper(wt)
+    println("updatedTreeComp: " + wt)
+    tmw.setFilter(excludeComplete,filtContexts)
+    val nt = new JTree(tmw)
     nt.setRootVisible(false)
     listenToTree(nt)
     new Component {
@@ -113,7 +113,7 @@ object WtdUi extends SimpleSwingApplication {
     contents += contextField
     
     this.listenTo(isDoneBox)
-    
+    WtdUi.listenTo(isDoneBox)
     reactions += {
       case ButtonClicked(b) => {
         if(b == isDoneBox && taskO.isDefined) {
@@ -123,18 +123,22 @@ object WtdUi extends SimpleSwingApplication {
     }
   }
   
+  def filterOnContext(contSet:Set[String]) = {
+      //val filteredW = new Wtftd(w.root.filteredCopy(contSet,includeCompletedTasks))
+      //displayTask(filteredW.getNextTask())
+      filteredTreePane.contents = updatedTreeComp(w,!includeCompletedTasks,contSet)
+  }
+  
   reactions += {
     case ButtonClicked(b) => {
       println("clicked " + b.text)
+      // Use matching
       if(b == allButton) {
-        val filteredW = new Wtftd(w.root.filteredCopy(Set.empty,includeCompletedTasks))
-        displayTask(filteredW.getNextTask())
-        filteredTreePane.contents = updatedTreeComp(filteredW)
+        filterOnContext(Set.empty)
       } else if(allContexts.contains(b.text)) {
-        val filteredW = new Wtftd(w.root.filteredCopy(Set(b.text),includeCompletedTasks))
-        displayTask(filteredW.getNextTask())
-        filteredTreePane.contents = updatedTreeComp(filteredW)
+        filterOnContext(Set(b.text))
       }
+      
     }
   }
 

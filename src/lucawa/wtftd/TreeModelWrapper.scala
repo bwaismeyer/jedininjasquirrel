@@ -12,7 +12,22 @@ class TreeModelWrapper(wtd:Wtftd) extends TreeModel {
 
   private def tOnly = {throw new RuntimeException("only tasks accepted")}
   
+  private var taskFilter:Function1[Task,Boolean] = (t) => true
+  private def filteredChildren(t:Task):IndexedSeq[Task] = {
+    t.children.filter(taskFilter)
+  }
+  
+  def setFilter(excludeComplete:Boolean,filtContexts:Set[String]) = {
+    taskFilter =
+      (t:Task) => {(!t.done || !excludeComplete) && {
+       (filtContexts.size==0 || (t.getChildContexts(true) ++ t.getContext(true)).intersect(filtContexts).size > 0) 
+      }}
+      fireTreeStructureChanged(wtd.root)
+  }
+  
   var treeModelListeners = Set.empty[TreeModelListener]
+  
+  
   
   def addTreeModelListener(tml:TreeModelListener) = {
     treeModelListeners = treeModelListeners + tml
@@ -27,14 +42,14 @@ class TreeModelWrapper(wtd:Wtftd) extends TreeModel {
   
   def getChild(parent:Object,idx:Int):Task = {
     parent match {
-      case t:Task => return t.children(idx)
+      case t:Task => return filteredChildren(t)(idx)
       case _ => tOnly
     }
   }
   
   def getChildCount(parent:Object):Int = {
     parent match {
-      case t:Task => return t.children.size
+      case t:Task => return filteredChildren(t).size
       case _ => tOnly
     }
       
@@ -46,7 +61,7 @@ class TreeModelWrapper(wtd:Wtftd) extends TreeModel {
         child match {
           case ct:Task => {
             for(ci <- 0 until getChildCount(pt)) {
-               if(pt.children(ci)==ct) return ci
+               if(filteredChildren(pt)(ci)==ct) return ci
             }
             return -1
           }
