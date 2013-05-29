@@ -170,6 +170,8 @@ class Task(val description:String,private var priority:Double,private var parent
       newMe.done = this.done
       newMe
     }
+    
+    def getParent = parent
 	
 	def getPriority = priority
 	

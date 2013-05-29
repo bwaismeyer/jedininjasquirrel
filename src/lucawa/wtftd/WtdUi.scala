@@ -15,12 +15,15 @@ import java.awt.event.MouseEvent
  */
 object WtdUi extends SimpleSwingApplication {
 
-  //val foo = new BoxPanel(Orientation.Vertical)
+  var currentTaskFilter:Function1[Task,Boolean] = (t) => true
+  var currentContexts = Set.empty[String]
+  var currentTask: Option[Task] = None
 
   val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
   val w = twi.readWtftd
   
   val completedTasksBox = new CheckBox("Show completed tasks")
+  val isDoneBox = new CheckBox("Completed") 
   // determines whether to show completed tasks
   def includeCompletedTasks = completedTasksBox.selected
   // the label of the button that displays tasks from all contexts
@@ -48,8 +51,8 @@ object WtdUi extends SimpleSwingApplication {
     	   val clickedTask  = selPath.getLastPathComponent().asInstanceOf[Task]
     	   println("Single click on row %s, path=%s".format(selRow.toString,selPath.toString))
     	   println("child contexts: " + clickedTask.getChildContexts(false))
-    	   val nextTask = w.getNextTask(clickedTask)
-    	   displayTask(nextTask)
+    	   currentTask = Some(w.getNextTask(clickedTask))
+    	   displayTask(currentTask)
          }
          else if(e.getClickCount() == 2) {
            //myDoubleClick(selRow, selPath);
@@ -60,20 +63,35 @@ object WtdUi extends SimpleSwingApplication {
    mjt.addMouseListener(ml);
   }
   
-  private def displayTask(t:Task) = {
-    flatTasks.text = t.ancestryString + "\n\n" + t.toString
-    taskControlPanel.setTask(t)
+  private def displayTask(tOpt:Option[Task]) = {
+    if(tOpt.isDefined) {
+      flatTasks.text = tOpt.get.ancestryString + "\n\n" + tOpt.get.toString
+      taskControlPanel.setTask(tOpt)
+    } else {
+      flatTasks.text = "No task selected"
+    }
   }
+  
+  
  
   val filteredTreePane = new ScrollPane {
     this.preferredSize = new Dimension(500,400)
-    contents = updatedTreeComp(w,false,Set.empty)
-  } 
+    println("foo")
+    contents = updatedTreeComp(w) //,!WtdUi.completedTasksBox.selected,WtdUi.currentContexts)
+  }
   
-  def updatedTreeComp(wt:Wtftd,excludeComplete:Boolean,filtContexts:Set[String]) = {
+  def updateFilter() = {
+    currentTaskFilter =
+      (t:Task) => {(!t.done || this.completedTasksBox.selected) && {
+       (currentContexts.size==0 || (t.getChildContexts(true) ++ t.getContext(true)).intersect(currentContexts).size > 0) 
+      }}
+  }
+  
+  def updatedTreeComp(wt:Wtftd) = {// ,excludeComplete:Boolean,filtContexts:Set[String]) = {
     val tmw = new TreeModelWrapper(wt)
     println("updatedTreeComp: " + wt)
-    tmw.setFilter(excludeComplete,filtContexts)
+    updateFilter()
+    tmw.setFilter(currentTaskFilter)
     val nt = new JTree(tmw)
     nt.setRootVisible(false)
     listenToTree(nt)
@@ -98,15 +116,22 @@ object WtdUi extends SimpleSwingApplication {
   }
   
   val taskControlPanel = new GridPanel(3,1) {
-    val isDoneBox = new CheckBox("Completed") 
     val priorityField = new TextArea(1,3)
     val contextField = new TextArea(1,20)
     var taskO:Option[Task] = None
-    def setTask(t:Task) = {
-      this.taskO = Some(t)
-      isDoneBox.selected = t.done
-      priorityField.text = t.getPriority.toString
-      contextField.text = t.getContext(true).mkString(",")
+    
+    def setTask(to:Option[Task]) = {
+      this.taskO = to
+      if(to.isDefined) {
+        val t = to.get
+    	isDoneBox.selected = t.done
+        priorityField.text = t.getPriority.toString
+        contextField.text = t.getContext(true).mkString(",")
+      } else {
+        isDoneBox.selected = false
+        priorityField.text = "NA"
+        contextField.text  = "NA"
+      }
     }
     contents += isDoneBox
     contents += priorityField
@@ -118,28 +143,43 @@ object WtdUi extends SimpleSwingApplication {
       case ButtonClicked(b) => {
         if(b == isDoneBox && taskO.isDefined) {
           taskO.get.done = isDoneBox.selected
+          println("setting " + taskO.get + " done to " + isDoneBox.selected)
         }
       }
     }
   }
   
-  def filterOnContext(contSet:Set[String]) = {
-      //val filteredW = new Wtftd(w.root.filteredCopy(contSet,includeCompletedTasks))
-      //displayTask(filteredW.getNextTask())
-      filteredTreePane.contents = updatedTreeComp(w,!includeCompletedTasks,contSet)
+  def refreshTree() = {
+      filteredTreePane.contents = updatedTreeComp(w) //,!includeCompletedTasks,currentContexts)
   }
   
   reactions += {
-    case ButtonClicked(b) => {
-      println("clicked " + b.text)
-      // Use matching
-      if(b == allButton) {
-        filterOnContext(Set.empty)
-      } else if(allContexts.contains(b.text)) {
-        filterOnContext(Set(b.text))
-      }
-      
+    case ButtonClicked(b) if(b == allButton) => {
+      currentContexts = Set.empty
+      refreshTree()
     }
+    case ButtonClicked(b) if(allContexts.contains(b.text)) => {
+      currentContexts = Set(b.text)
+      refreshTree()
+    }
+    case ButtonClicked(b) if(b == this.isDoneBox) => {
+      currentTask = if(currentTask.isDefined) {
+        if(currentTask.get.getParent.isDefined) {
+          Some(w.getNextTask(currentTask.get.getParent.get,currentTaskFilter))
+        } else {None}
+      } else {
+        None
+      }
+      println("new currentTask: " + currentTask)
+      //currentTask = Some(w.getNextTask(currentTask.get.parent).getOrElse(w.root),currentTaskFilter))
+      displayTask(currentTask)
+      refreshTree()
+    }
+    case ButtonClicked(b) =>  {
+      refreshTree()
+    }
+
+    
   }
 
   def top = new MainFrame {
@@ -164,6 +204,7 @@ object WtdUi extends SimpleSwingApplication {
       add(new Label("Contexts"),constraints(0,0))
       add(contextButtonPanel,constraints(0,1,1,1,0.0,0.0,GridBagPanel.Fill.Both))
       add(completedTasksBox,constraints(0,2,1,1,0.0,0.0,GridBagPanel.Fill.Both))
+      WtdUi.listenTo(completedTasksBox)
       add(new Label("Task tree"),(1,0))
       add(filteredTreePane,constraints(1,1,2,1,1.0,1.0,GridBagPanel.Fill.Both))
       add(new Label("Next task"),(3,0))

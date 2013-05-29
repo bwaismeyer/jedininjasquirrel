@@ -17,6 +17,7 @@ class TreeModelWrapper(wtd:Wtftd) extends TreeModel {
     t.children.filter(taskFilter)
   }
   
+  /*
   def setFilter(excludeComplete:Boolean,filtContexts:Set[String]) = {
     taskFilter =
       (t:Task) => {(!t.done || !excludeComplete) && {
@@ -24,10 +25,15 @@ class TreeModelWrapper(wtd:Wtftd) extends TreeModel {
       }}
       fireTreeStructureChanged(wtd.root)
   }
+  * 
+  */
+  
+  def setFilter(tf: Function1[Task,Boolean]) = {
+    taskFilter = tf
+    fireTreeStructureChanged(wtd.root)
+  }
   
   var treeModelListeners = Set.empty[TreeModelListener]
-  
-  
   
   def addTreeModelListener(tml:TreeModelListener) = {
     treeModelListeners = treeModelListeners + tml
