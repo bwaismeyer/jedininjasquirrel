@@ -19,10 +19,14 @@ object WtdUi extends SimpleSwingApplication {
   var currentContexts = Set.empty[String]
   var currentTask: Option[Task] = None
 
+  
   val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
+  val savePath = "C:/Users/chris/Documents/professional/todoListFromUi.txt"
   val w = twi.readWtftd
+  var tmw = new TreeModelWrapper(w)
   
   val completedTasksBox = new CheckBox("Show completed tasks")
+  val saveListButton    = new Button("Save todo-list")
   val isDoneBox = new CheckBox("Completed") 
   // determines whether to show completed tasks
   def includeCompletedTasks = completedTasksBox.selected
@@ -77,7 +81,7 @@ object WtdUi extends SimpleSwingApplication {
   val filteredTreePane = new ScrollPane {
     this.preferredSize = new Dimension(500,400)
     println("foo")
-    contents = updatedTreeComp(w) //,!WtdUi.completedTasksBox.selected,WtdUi.currentContexts)
+    contents = newTreeComponent(w) //,!WtdUi.completedTasksBox.selected,WtdUi.currentContexts)
   }
   
   def updateFilter() = {
@@ -87,8 +91,8 @@ object WtdUi extends SimpleSwingApplication {
       }}
   }
   
-  def updatedTreeComp(wt:Wtftd) = {// ,excludeComplete:Boolean,filtContexts:Set[String]) = {
-    val tmw = new TreeModelWrapper(wt)
+  def newTreeComponent(wt:Wtftd) = {// ,excludeComplete:Boolean,filtContexts:Set[String]) = {
+    tmw = new TreeModelWrapper(wt)
     println("updatedTreeComp: " + wt)
     updateFilter()
     tmw.setFilter(currentTaskFilter)
@@ -118,10 +122,10 @@ object WtdUi extends SimpleSwingApplication {
   val taskControlPanel = new GridPanel(3,1) {
     val priorityField = new TextArea(1,3)
     val contextField = new TextArea(1,20)
-    var taskO:Option[Task] = None
+    //var taskO:Option[Task] = None
     
     def setTask(to:Option[Task]) = {
-      this.taskO = to
+      //this.taskO = to
       if(to.isDefined) {
         val t = to.get
     	isDoneBox.selected = t.done
@@ -137,20 +141,20 @@ object WtdUi extends SimpleSwingApplication {
     contents += priorityField
     contents += contextField
     
-    this.listenTo(isDoneBox)
+    //this.listenTo(isDoneBox)
     WtdUi.listenTo(isDoneBox)
-    reactions += {
-      case ButtonClicked(b) => {
-        if(b == isDoneBox && taskO.isDefined) {
-          taskO.get.done = isDoneBox.selected
-          println("setting " + taskO.get + " done to " + isDoneBox.selected)
-        }
-      }
-    }
+    //reactions += {
+    //  case ButtonClicked(b) => {
+    //    
+    //  }
+    //}
   }
   
   def refreshTree() = {
-      filteredTreePane.contents = updatedTreeComp(w) //,!includeCompletedTasks,currentContexts)
+    // Presently this rebuilds the tree, so the focus etc. are lost.
+    filteredTreePane.contents = newTreeComponent(w)
+    // One alternative is to use valueForPathChanged, which is not currently implemented
+    //tmw.valueForPathChanged
   }
   
   reactions += {
@@ -163,6 +167,15 @@ object WtdUi extends SimpleSwingApplication {
       refreshTree()
     }
     case ButtonClicked(b) if(b == this.isDoneBox) => {
+      //if(b == isDoneBox && taskO.isDefined) {
+      //    taskO.get.done = isDoneBox.selected
+      //    println("setting " + taskO.get + " done to " + isDoneBox.selected)
+      //  }
+      if(currentTask.isDefined) {
+        currentTask.get.done = isDoneBox.selected
+      }
+      val oldCurrentTask = currentTask
+
       currentTask = if(currentTask.isDefined) {
         if(currentTask.get.getParent.isDefined) {
           Some(w.getNextTask(currentTask.get.getParent.get,currentTaskFilter))
@@ -173,7 +186,16 @@ object WtdUi extends SimpleSwingApplication {
       println("new currentTask: " + currentTask)
       //currentTask = Some(w.getNextTask(currentTask.get.parent).getOrElse(w.root),currentTaskFilter))
       displayTask(currentTask)
-      refreshTree()
+      // One might only refresh the tree if the current task has changed -- that implies that visibility has changed.
+      // This is imperfect, however.
+      //if(oldCurrentTask != currentTask) {
+    	refreshTree()
+      //}
+    }
+    case ButtonClicked(b) if(b== this.saveListButton) => {
+      val two = new TextWtdIo(savePath)
+      two.syncWtftd(this.w)
+      println("Saved to " + savePath)
     }
     case ButtonClicked(b) =>  {
       refreshTree()
@@ -205,6 +227,8 @@ object WtdUi extends SimpleSwingApplication {
       add(contextButtonPanel,constraints(0,1,1,1,0.0,0.0,GridBagPanel.Fill.Both))
       add(completedTasksBox,constraints(0,2,1,1,0.0,0.0,GridBagPanel.Fill.Both))
       WtdUi.listenTo(completedTasksBox)
+      add(saveListButton,constraints(0,3,1,1,0.0,0.0,GridBagPanel.Fill.Both))
+      WtdUi.listenTo(saveListButton)
       add(new Label("Task tree"),(1,0))
       add(filteredTreePane,constraints(1,1,2,1,1.0,1.0,GridBagPanel.Fill.Both))
       add(new Label("Next task"),(3,0))
