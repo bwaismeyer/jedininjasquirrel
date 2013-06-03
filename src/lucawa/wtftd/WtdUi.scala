@@ -18,9 +18,8 @@ object WtdUi extends SimpleSwingApplication {
   var currentTaskFilter:Function1[Task,Boolean] = (t) => true
   var currentContexts = Set.empty[String]
   var currentTask: Option[Task] = None
-
   
-  val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
+  val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoListFromUi.txt")
   val savePath = "C:/Users/chris/Documents/professional/todoListFromUi.txt"
   val w = twi.readWtftd
   var tmw = new TreeModelWrapper(w)
@@ -55,7 +54,7 @@ object WtdUi extends SimpleSwingApplication {
     	   val clickedTask  = selPath.getLastPathComponent().asInstanceOf[Task]
     	   println("Single click on row %s, path=%s".format(selRow.toString,selPath.toString))
     	   println("child contexts: " + clickedTask.getChildContexts(false))
-    	   currentTask = Some(w.getNextTask(clickedTask))
+    	   currentTask = Some(w.getNextTask(clickedTask,currentTaskFilter))
     	   displayTask(currentTask)
          }
          else if(e.getClickCount() == 2) {
@@ -189,8 +188,9 @@ object WtdUi extends SimpleSwingApplication {
       // One might only refresh the tree if the current task has changed -- that implies that visibility has changed.
       // This is imperfect, however.
       //if(oldCurrentTask != currentTask) {
-    	refreshTree()
+    	//refreshTree()
       //}
+      tmw.fireTreeStructureChanged(oldCurrentTask.get.getParent.get)
     }
     case ButtonClicked(b) if(b== this.saveListButton) => {
       val two = new TextWtdIo(savePath)

@@ -173,6 +173,14 @@ class Task(val description:String,private var priority:Double,private var parent
     
     def getParent = parent
 	
+    def getPathToRoot:IndexedSeq[Task] = {
+      if(!parent.isDefined) {
+        Vector(this)
+      } else {
+        parent.get.getPathToRoot :+ this
+      }
+    }
+    
 	def getPriority = priority
 	
 	def getContext(inherit:Boolean=true):Set[String] = {
@@ -211,7 +219,7 @@ class Task(val description:String,private var priority:Double,private var parent
 	    throw new RuntimeException("no current support for changing parents, just setting empty")
 	  }
 	}
-	
+		
 	override def toString:String = {
 	  return (if(done) "+" else "-") + " " + description + " " + priority
 	}

@@ -39,12 +39,15 @@ class TreeModelWrapper(wtd:Wtftd) extends TreeModel {
     treeModelListeners = treeModelListeners + tml
   }
   
-  private def fireTreeStructureChanged(oldRoot:Task):Unit = {
-        val e:TreeModelEvent = new TreeModelEvent(this,Array(oldRoot.asInstanceOf[Object]))
-        for(tml <- treeModelListeners) {
-            tml.treeStructureChanged(e)
-        }
+  def fireTreeStructureChanged(sourceTask:Task):Unit = {
+    
+    val path = sourceTask.getPathToRoot.toArray.map(_.asInstanceOf[Object])
+    
+    val e:TreeModelEvent = new TreeModelEvent(this,path)
+    for(tml <- treeModelListeners) {
+      tml.treeStructureChanged(e)
     }
+  }
   
   def getChild(parent:Object,idx:Int):Task = {
     parent match {
