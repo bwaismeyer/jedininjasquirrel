@@ -6,7 +6,7 @@ import scala.collection.mutable.Stack
 object TextWtdIo {
   
   def main(args:Array[String]):Unit = {
-    val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
+    val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoListFromUi.txt")
     val w = twi.readWtftd
     val two = new TextWtdIo("C:/Users/chris/Documents/professional/todoListSorted.txt")
     
