@@ -20,7 +20,7 @@ object WtdUi extends SimpleSwingApplication {
   var currentTask: Option[Task] = None
   
   val twi = new TextWtdIo("C:/Users/chris/Documents/professional/todoList.txt")
-  val savePath = "C:/Users/chris/Documents/professional/todoListFromUi.txt"
+  val savePath = "C:/Users/chris/Documents/professional/todoList.txt"
   val w = twi.readWtftd
   var tmw = new TreeModelWrapper(w)
   
