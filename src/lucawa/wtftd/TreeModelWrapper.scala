@@ -16,18 +16,7 @@ class TreeModelWrapper(wtd:Wtftd) extends TreeModel {
   private def filteredChildren(t:Task):IndexedSeq[Task] = {
     t.children.filter(taskFilter)
   }
-  
-  /*
-  def setFilter(excludeComplete:Boolean,filtContexts:Set[String]) = {
-    taskFilter =
-      (t:Task) => {(!t.done || !excludeComplete) && {
-       (filtContexts.size==0 || (t.getChildContexts(true) ++ t.getContext(true)).intersect(filtContexts).size > 0) 
-      }}
-      fireTreeStructureChanged(wtd.root)
-  }
-  * 
-  */
-  
+    
   def setFilter(tf: Function1[Task,Boolean]) = {
     taskFilter = tf
     fireTreeStructureChanged(wtd.root)

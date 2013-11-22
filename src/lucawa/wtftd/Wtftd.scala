@@ -95,6 +95,19 @@ class Wtftd(val root:Task=new Task("root",0.0,None)) {
 	  child
 	}
 	
+	// Deletes a child and all descendants!
+	def deleteChild(parent:Task,child:Task):Boolean = {
+	  if(parent.children.contains(child)) {
+	    val cIndex = parent.children.indexOf(child)
+	    println("parent children count before: " + parent.children.size)
+	    parent.children = parent.children.filterNot((t) => t==child)
+	    println("parent children count after: " + parent.children.size)
+	    return true
+	  } else {
+	    return false
+	  }
+	}
+	
 	def tasksEmpty:Boolean = {
 	  val retN = getNextTask()
 	  if(retN == root) {
@@ -115,7 +128,7 @@ class Wtftd(val root:Task=new Task("root",0.0,None)) {
 	}
 }
 
-class Task(val description:String,private var priority:Double,private var parent:Option[Task],private var context:Set[String]=Set.empty) {
+class Task(var description:String,private var priority:Double,private var parent:Option[Task],private var context:Set[String]=Set.empty) {
   
   	implicit object Ord extends Ordering[Task] {
 		def compare(x: Task, y: Task) = y.priority.compare(x.priority)

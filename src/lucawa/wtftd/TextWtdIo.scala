@@ -51,6 +51,9 @@ class TextWtdIo(val path:String) extends WtdIo {
     parentStack.push((w.root,-1))
     while(lines.hasNext) {
       val line = lines.next
+      if(linePattern.findFirstIn(line).isEmpty) {
+        throw new RuntimeException("Line did not match pattern. Line was %s".format(line))
+      }
       val linePattern(indent,completeStr,priorityStr,contextStr,taskString) = line
       val isComplete = completeStr match {
         case "+" => true
