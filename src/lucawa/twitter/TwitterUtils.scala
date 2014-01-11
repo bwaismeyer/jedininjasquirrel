@@ -181,7 +181,7 @@ object TwitterUtils {
     val lookupResults = try {
       twitter.lookupUsers(Array(userId))
     } catch {
-      case _ => {
+      case x:Exception => {
         log("getFollowersForIdUncached failed on userId %s".format(userId))
         throw new RuntimeException("Cannot continue without user info.")
       }
